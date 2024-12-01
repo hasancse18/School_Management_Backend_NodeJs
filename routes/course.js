@@ -1,6 +1,7 @@
 const express = require('express');
 const isUserAuthenticate = require('../middleweare/userMiddleweare');
 const Course = require('../model/courseSchema');
+const User = require('../model/userSchema')
 const router = express.Router();
 const jwt = require('jsonwebtoken')
 const cloudinary = require('cloudinary').v2
@@ -47,10 +48,53 @@ router.post('/add-course',isUserAuthenticate,async(req,res)=>{
     })
 })
 
-router.get('/',(req,res)=>{
-    res.status(200).json({
-        message: "Hello"
-    })
+router.get('/',isUserAuthenticate,async(req,res)=>{
+    const token = req.cookies.user
+    //console.log(token);
+    
+    if(token)
+    {
+        const verify = jwt.verify(token,"123456")
+        //console.log(verify);
+       
+        
+        
+        try {
+            
+            const response = await Course.find({uId:verify.id})
+            
+            
+            if(response[0]){
+                res.status(200).json({
+                    success: true,
+                    response
+                })
+            }
+            else
+            {
+                res.status(404).json({
+                    success: false,
+                    message: 'No Data Found'
+                })
+            }
+        } catch (error) {
+            console.log(error);
+            
+            res.status(500).json({
+                success: false,
+                message: 'No Data Found',
+                error
+            })
+        }
+    }
+
 })
+
+
+// router.get('/',(req,res)=>{
+//     res.status(200).json({
+//         message: "Hello"
+//     })
+// })
 
 module.exports = router;
