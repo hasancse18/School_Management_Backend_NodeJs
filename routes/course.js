@@ -28,6 +28,7 @@ router.post('/add-course',isUserAuthenticate,async(req,res)=>{
             startingDate: req.body.startingDate,
             endDate: req.body.endDate,
             imageUrl: cloudinary_response.secure_url,
+            imageId: cloudinary_response.public_id,
             uId: verify.id
         })
         const response = await newCourse.save();
@@ -48,17 +49,15 @@ router.post('/add-course',isUserAuthenticate,async(req,res)=>{
     })
 })
 
-router.get('/',isUserAuthenticate,async(req,res)=>{
+//get all the course of a user
+router.get('/getcourses',isUserAuthenticate,async(req,res)=>{
     const token = req.cookies.user
     //console.log(token);
     
     if(token)
     {
         const verify = jwt.verify(token,"123456")
-        //console.log(verify);
-       
-        
-        
+        //console.log(verify);        
         try {
             
             const response = await Course.find({uId:verify.id})
@@ -90,6 +89,55 @@ router.get('/',isUserAuthenticate,async(req,res)=>{
 
 })
 
+//get course details by id
+router.get('/getcourses/:id',isUserAuthenticate,async(req,res)=>{
+    try {
+        const response = await Course.findById(req.params.id);
+        if(response){
+            res.status(200).json({
+                success: true,
+                message: response
+            })
+           
+        }
+        else
+        {
+            res.status(404).json({
+                message: "Invalid Id"
+            })
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(404).json({
+            success: false,
+            message: "Get Courses By Id Error"
+        })
+    }
+})
+//Delete Course by their Id
+router.delete('/deletecourse/:id',isUserAuthenticate, async(req,res)=>{
+    try {
+        const token = req.cookies.user;
+        const verify  = jwt.verify(token,"123456")
+        const userId = await Course.findById(req.params.id)
+        if(userId.uId === verify.id)
+        {
+            const response = await Course.findByIdAndDelete(req.params.id)
+            const deleteResponse = await cloudinary.uploader.destroy(userId.imageId)
+            res.status(200).json({
+                response,
+                deleteResponse,
+                message: "Delete Successfully"
+            })
+        }
+       
+    } catch (error) {
+        res.status(500).json({
+            success:false,
+            message: 'Cannot Delete the course'
+        })
+    }
+})
 
 // router.get('/',(req,res)=>{
 //     res.status(200).json({
