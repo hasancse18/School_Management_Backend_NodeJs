@@ -17,16 +17,18 @@ router.post('/add-course',isUserAuthenticate,async(req,res)=>{
     //res.status(200).json({msg: 'Add Batch Details'});
     const token = req.cookies.user;
     const verify = jwt.verify(token,"123456")
+    const data = req.body;
     //console.log(verify.id);
     try {
         const cloudinary_response = await cloudinary.uploader.upload(req.files.image.tempFilePath);
 
         const newCourse = new Course({
-            courseName: req.body.courseName,
-            price: req.body.price,
-            description: req.body.description,
-            startingDate: req.body.startingDate,
-            endDate: req.body.endDate,
+            // courseName: req.body.courseName,
+            // price: req.body.price,
+            // description: req.body.description,
+            // startingDate: req.body.startingDate,
+            // endDate: req.body.endDate,
+            ...data,
             imageUrl: cloudinary_response.secure_url,
             imageId: cloudinary_response.public_id,
             uId: verify.id
@@ -44,9 +46,6 @@ router.post('/add-course',isUserAuthenticate,async(req,res)=>{
             error
         })
     }
-    res.status(200).json({
-        success: true
-    })
 })
 
 //get all the course of a user
@@ -135,6 +134,48 @@ router.delete('/deletecourse/:id',isUserAuthenticate, async(req,res)=>{
         res.status(500).json({
             success:false,
             message: 'Cannot Delete the course'
+        })
+    }
+})
+
+
+//Update the Course
+router.put('/update/:id',isUserAuthenticate,async(req,res)=>{
+    try {
+        const token = req.cookies.user;
+        const verify  = jwt.verify(token,"123456")
+        const userId = await Course.findById(req.params.id)
+        if(verify.id === userId.uId)
+        {
+            const data = req.body;
+            if(!req.files){
+                const response = await Course.findByIdAndUpdate(req.params.id,data,{new:true})
+                return res.status(200).json({
+                    success: true,
+                    response
+                })
+            }
+            else
+            {
+
+                const delete_response = await cloudinary.uploader.destroy(userId.imageId)
+                const cloudinary_response = await cloudinary.uploader.upload(req.files.image.tempFilePath);
+                const updateData = {
+                    ...data,
+                    imageUrl: cloudinary_response.secure_url,
+                    imageId: cloudinary_response.public_id,
+
+                }
+                const response = await Course.findByIdAndUpdate(req.params.id,updateData,{new: true})
+                return res.status(200).json({
+                    success: true,
+                    response
+                })
+            }
+        }
+    } catch (error) {
+        res.status(500).json({
+            message: 'Error in Update Data'
         })
     }
 })
