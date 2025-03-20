@@ -108,11 +108,11 @@ router.delete('/deletestudent/:id',isUserAuthenticate,async(req,res)=>{
     const token = req.cookies.user;
     const verify = jwt.verify(token,"123456");
     const students = await stuedent.findById(req.params.id);
-    if(student.uId === verify.id)
+    if(students.uId === verify.id)
     {
         try {
             const response = await stuedent.findByIdAndDelete(req.params.id);
-            const cloudinary_response = await cloudinary.uploader.upload.destroy(students.imageId);
+            const cloudinary_response = await cloudinary.uploader.destroy(students.imageId);
             res.status(200).json({
                 response,
                 cloudinary_response,
@@ -121,8 +121,11 @@ router.delete('/deletestudent/:id',isUserAuthenticate,async(req,res)=>{
         } catch (error) {
             res.status(500).json({
                 success: false,
-                message: "Cannot Delete The Student"
-            })
+                message: "Cannot Delete The Student",
+                
+                
+            });
+            console.log(error);
         }
     }
 
