@@ -102,4 +102,30 @@ router.get('/getstudent/:id',isUserAuthenticate,async(req,res)=>{
     }
 })
 
+//Delete Student by Their Id
+
+router.delete('/deletestudent/:id',isUserAuthenticate,async(req,res)=>{
+    const token = req.cookies.user;
+    const verify = jwt.verify(token,"123456");
+    const students = await stuedent.findById(req.params.id);
+    if(student.uId === verify.id)
+    {
+        try {
+            const response = await stuedent.findByIdAndDelete(req.params.id);
+            const cloudinary_response = await cloudinary.uploader.upload.destroy(students.imageId);
+            res.status(200).json({
+                response,
+                cloudinary_response,
+                message: "Delete Successfully"
+            })
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: "Cannot Delete The Student"
+            })
+        }
+    }
+
+})
+
 module.exports = router;
